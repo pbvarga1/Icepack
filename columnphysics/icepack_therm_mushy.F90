@@ -1509,10 +1509,6 @@ contains
                   dzTsn < dTemp_errmax .and. &
                   dzTin < dTemp_errmax .and. &
                   abs(ferr) < 0.9_dbl_kind*ferrmax)
-    ! if (.not. lconverged) then
-    !   print *, dTsf, dzTsn, dzTin, dTemp_errmax
-    !   print *, abs(ferr), 0.9_dbl_kind*ferrmax
-    ! endif
 
   end subroutine check_picard_convergence
 
