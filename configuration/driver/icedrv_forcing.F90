@@ -25,7 +25,7 @@
       public :: init_forcing, get_forcing, interp_coeff, interp_coeff_monthly
 
       integer (kind=int_kind), parameter :: &
-         ntime = 43800        ! number of data points in time - number of hours in 2 years
+         ntime = 43800        ! number of data points in time - number of hours in 5 years
 
       integer (kind=int_kind), public :: &
          ycycle          , & ! number of years in forcing cycle
