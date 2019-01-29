@@ -70,6 +70,7 @@
       use icedrv_forcing, only: atm_data_format, ocn_data_format, bgc_data_format
       use icedrv_forcing, only: data_dir
       use icedrv_forcing, only: oceanmixed_ice, restore_ocn, trestore
+      use icedrv_forcing, only: pump_start, pump_end, pump_amnt, pump_repeats
 
       ! local variables
 
@@ -161,6 +162,9 @@
         tr_pond_topo, &
         tr_aero
 
+      namelist /custom_nml/ &
+        pump_start,      pump_end, pump_amnt, pump_repeats
+
       !-----------------------------------------------------------------
       ! query Icepack values
       !-----------------------------------------------------------------
@@ -247,6 +251,12 @@
       tr_pond_topo = .false. ! explicit melt ponds (topographic)
       tr_aero      = .false. ! aerosols
 
+      ! Custom Input
+      pump_start = -1
+      pump_end = 17521
+      pump_amnt = 0.3
+      pump_repeats = 1
+
       !-----------------------------------------------------------------
       ! read from input file
       !-----------------------------------------------------------------
@@ -288,6 +298,11 @@
          print*,'Reading forcing_nml'
          read(nu_nml, nml=forcing_nml,iostat=nml_error)
          if (nml_error /= 0) exit
+
+         print*,'Reading custom_nml'
+         read(nu_nml, nml=custom_nml,iostat=nml_error)
+         if (nml_error /= 0) exit
+
       end do
       if (nml_error == 0) close(nu_nml)
       if (nml_error /= 0) then
