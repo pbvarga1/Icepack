@@ -1,17 +1,17 @@
 &setup_nml
     days_per_year  = 365
     use_leap_years = .false.
-    year_init      = 2015
+    year_init      = 2016
     istep0         = 0
     dt             = 3600.0
-    npt            = 8760
+    npt            = 43800
     ndtd           = 1
     ice_ic         = 'none'
     restart        = .false.
     restart_dir    = './restart/'
     dumpfreq       = 'y'
     dump_last      = .false.
-    diagfreq       = 24
+    diagfreq       = 1
     diag_file      = 'ice_diag'
     cpl_bgc        = .false.
 /
@@ -63,7 +63,7 @@
     hs0             = 0.
     hs1             = 0.03
     dpscale         = 1.e-3
-    frzpnd          = 'hlid'
+    frzpnd          = 'cesm'
     rfracmin        = 0.15
     rfracmax        = 1.
     pndaspect       = 0.8
@@ -79,19 +79,19 @@
     ustar_min       = 0.0005
     emissivity      = 0.95
     fbot_xfer_type  = 'constant'
-    update_ocn_f    = .false.
-    l_mpond_fresh   = .false.
+    update_ocn_f    = .true.
+    l_mpond_fresh   = .true.
     tfrz_option     = 'mushy'
     oceanmixed_ice  = .true.
     restore_ocn     = .false.
     trestore        = 90
     precip_units    = 'mks'
     default_season  = 'spring'
-    atm_data_type   = 'clim'
-    ocn_data_type   = 'SHEBA'
-    bgc_data_type   = 'default'
-    fyear_init      = 2015
-    ycycle          = 1
+    atm_data_type   = 'thesis'
+    ocn_data_type   = 'thesis'
+    bgc_data_type   = 'thesis'
+    fyear_init      = 2016
+    ycycle          = 5
     data_dir        = '/Users/ftuser/Desktop/CICE-Consortium/ICEPACK_DATA/'
     atm_data_file   = 'unknown_atm_data_file'
     ocn_data_file   = 'unknown_ocn_data_file'
@@ -111,7 +111,7 @@
 /
 
 &zbgc_nml
-    tr_brine        = .false.
+    tr_brine        = .true.
     tr_zaero        = .false.
     modal_aero      = .false.
     skl_bgc         = .false.
@@ -255,3 +255,9 @@
     ratio_C2N_proteins = 7.0
 /
 
+&custom_nml
+    pump_start         = 200
+    pump_end           = 200
+    pump_amnt          = 0
+    pump_repeats       = 1
+/
