@@ -78,7 +78,7 @@
       real (kind=dbl_kind) :: & 
          pTair, pfsnow, pfrain, &
          paice, hiavg, hsavg, hbravg, psalt, pTsfc, &
-         pevap, pfhocn
+         pevap, pfhocn, hpnd
 
       real (kind=dbl_kind), dimension (nx) :: &
          work1, work2
@@ -87,7 +87,7 @@
          Tffresh, rhos, rhow, rhoi
 
       logical (kind=log_kind) :: tr_brine
-      integer (kind=int_kind) :: nt_fbri, nt_Tsfc
+      integer (kind=int_kind) :: nt_fbri, nt_Tsfc, nt_hpnd
 
       character(len=*), parameter :: subname='(runtime_diags)'
 
@@ -97,7 +97,7 @@
 
       call icepack_query_parameters(calc_Tsfc_out=calc_Tsfc)
       call icepack_query_tracer_flags(tr_brine_out=tr_brine)
-      call icepack_query_tracer_indices(nt_fbri_out=nt_fbri, nt_Tsfc_out=nt_Tsfc)
+      call icepack_query_tracer_indices(nt_fbri_out=nt_fbri, nt_Tsfc_out=nt_Tsfc, nt_hpnd_out=nt_hpnd)
       call icepack_query_parameters(Tffresh_out=Tffresh, rhos_out=rhos, &
            rhow_out=rhow, rhoi_out=rhoi)
       call icepack_warnings_flush(nu_diag)
@@ -133,6 +133,8 @@
         pdhs(n) = vsno(n) - pdhs(n)  ! snow thickness change
         pde(n) =-(work1(n)- pde(n))/dt ! ice/snow energy change
         pfhocn = -fhocn(n)        ! ocean heat used by ice
+
+        hpnd = trcr(n, nt_hpnd)
         
         !-----------------------------------------------------------------
         ! start spewing
@@ -179,6 +181,7 @@
         write(nu_diag_out+n-1,900) 'effective dhi (m)      = ',pdhi(n)   ! ice thickness change
         write(nu_diag_out+n-1,900) 'effective dhs (m)      = ',pdhs(n)   ! snow thickness change
         write(nu_diag_out+n-1,900) 'intnl enrgy chng(W/m^2)= ',pde (n)   ! ice/snow energy change
+        write(nu_diag_out+n-1,900) 'pond height (m)        = ',hpnd
         write(nu_diag_out+n-1,*) '----------ocn----------'
         write(nu_diag_out+n-1,900) 'sst (C)                = ',sst(n)  ! sea surface temperature
         write(nu_diag_out+n-1,900) 'sss (ppt)              = ',sss(n)  ! sea surface salinity
