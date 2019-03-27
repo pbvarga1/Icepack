@@ -55,7 +55,9 @@ contains
                                           fsensn,   flatn,    &
                                           flwoutn,  fsurfn,   &
                                           fcondtop, fcondbot, &
-                                          fadvheat, snoice)
+                                          fadvheat, snoice,   &
+                                          Spond,    darcy,    &
+                                          hocn,     perm_harm)
 
     ! solve the enthalpy and bulk salinity of the ice for a single column
 
@@ -84,7 +86,11 @@ contains
          hilyr       , & ! ice layer thickness (m)
          hslyr       , & ! snow layer thickness (m)
          apond       , & ! melt pond area fraction
-         hpond           ! melt pond depth (m)
+         hpond       , & ! melt pond depth (m)
+         Spond       , & ! melt pond salinity (ppt)
+         hocn        , & ! ocean surface height above ice base (m)
+         perm_harm   , & ! harmonic mean of ice permeability (m2)
+         darcy           ! vertical flushing Darcy velocity (m/s)
 
     real (kind=dbl_kind), dimension (:), intent(inout) :: &
          Sswabs      , & ! SW radiation absorbed in snow layers (W m-2)
@@ -138,8 +144,7 @@ contains
          hslyr_min   , & ! minimum snow layer thickness (m)
          w           , & ! vertical flushing Darcy velocity (m/s)
          qocn        , & ! ocean brine enthalpy (J m-3)
-         qpond       , & ! melt pond brine enthalpy (J m-3)
-         Spond           ! melt pond salinity (ppt)
+         qpond           ! melt pond brine enthalpy (J m-3)
 
     integer(kind=int_kind) :: &
          k               ! ice/snow layer index
@@ -157,7 +162,6 @@ contains
     zqin0 = zqin
     zSin0 = zSin
 
-    Spond = c0
     qpond = enthalpy_brine(c0)
 
     hslyr_min = hs_min / real(nslyr, dbl_kind)
@@ -184,7 +188,7 @@ contains
                            hin,    hsn,   &
                            hilyr,         &
                            hpond,  apond, & 
-                           dt,     w)
+                           dt,     w, hocn, perm_harm)
     if (icepack_warnings_aborted(subname)) return
 
     ! calculate quantities related to drainage
@@ -295,6 +299,7 @@ contains
 
     ! drain ponds from flushing 
     call flush_pond(w, hpond, apond, dt)
+    darcy = w
     if (icepack_warnings_aborted(subname)) return
 
     ! flood snow ice
@@ -3007,7 +3012,8 @@ contains
                                hin,    hsn,   &
                                hilyr,         &
                                hpond,  apond, &
-                               dt,     w)
+                               dt,     w,     &
+                               hocn,   perm_harm)
    
     ! calculate the vertical flushing Darcy velocity (positive downward)
 
@@ -3027,6 +3033,8 @@ contains
          dt            ! time step (s)
 
     real(kind=dbl_kind), intent(out) :: &
+         hocn      , & ! ocean surface height above ice base (m)
+         perm_harm , & ! harmonic mean of ice permeability    (m2)
          w             ! vertical flushing Darcy flow rate (m s-1)
 
     real(kind=dbl_kind), parameter :: &
@@ -3036,8 +3044,6 @@ contains
     real(kind=dbl_kind) :: &
          perm       , & ! ice layer permeability (m2)
          ice_mass   , & ! mass of ice (kg m-2)
-         perm_harm  , & ! harmonic mean of ice permeability (m2)
-         hocn       , & ! ocean surface height above ice base (m)
          hbrine     , & ! brine surface height above ice base (m)
          w_down_max , & ! maximum downward flushing Darcy flow rate (m s-1) 
          phi_min    , & ! minimum porosity in the mush
@@ -3051,6 +3057,8 @@ contains
 
     ! initialize
     w = c0
+    hocn = c0
+    perm_harm = c0
 
     ! only flush if ponds are active
     if (tr_pond) then
