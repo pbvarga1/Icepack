@@ -20,6 +20,7 @@
       use icepack_parameters, only: gravit, depressT, rhofresh, kice
       use icepack_warnings, only: warnstr, icepack_warnings_add
       use icepack_warnings, only: icepack_warnings_setabort, icepack_warnings_aborted
+      use icepack_therm_shared, only: pond_freeze_temp
 
       implicit none
 
@@ -42,7 +43,7 @@
                                    aicen,  vicen, vsnon, &
                                    qicen,  sicen,        &
                                    Tsfcn,  alvl,         &
-                                   apnd,   hpnd,  ipnd)
+                                   apnd,   hpnd,  ipnd, pump_amnt, Spond)
 
       integer (kind=int_kind), intent(in) :: &
          nilyr, &    ! number of ice layers
@@ -73,7 +74,7 @@
 
       real (kind=dbl_kind), &
          intent(inout) :: &
-         apnd, hpnd, ipnd
+         apnd, hpnd, ipnd, pump_amnt
 
       real (kind=dbl_kind), dimension (:), intent(in) :: &
          qicen, &  ! ice layer enthalpy (J m-3)
@@ -81,7 +82,8 @@
 
       real (kind=dbl_kind), &
          intent(in) :: &
-         dhs       ! depth difference for snow on sea ice and pond ice
+         dhs   , & ! depth difference for snow on sea ice and pond ice
+         Spond     ! Pond salinity
 
       real (kind=dbl_kind), &
          intent(out) :: &
@@ -142,6 +144,7 @@
             hpondn = c0
             volpn  = c0
             hlid = c0
+            pump_amnt = c0
 
          else
 
@@ -158,6 +161,8 @@
                 +                 melts*rhos &
                 +                 frain*  dt)*aicen
 
+            dvn = dvn + pump_amnt*rfrac
+
             ! shrink pond volume under freezing conditions
             if (trim(frzpnd) == 'cesm') then
                Tp = Timelt - Td
@@ -171,9 +176,10 @@
                hlid = ipnd
                if (dvn == c0) then ! freeze pond
                   Ts = Tair - Tffresh
-                  if (Ts < c0) then
+                  Tp = pond_freeze_temp(Spond)
+                  if (Ts < Tp) then
                      ! if (Ts < -c2) then ! as in meltpond_cesm
-                     bdt = -c2*Ts*kice*dt/(rhoi*Lfresh)
+                     bdt = c2*(Tp - Ts)*kice*dt/(rhoi*Lfresh)
                      dhlid = p5*sqrt(bdt)                  ! open water freezing
                      if (hlid > dhlid) dhlid = p5*bdt/hlid ! existing ice
                      dhlid = min(dhlid, hpnd*rhofresh/rhoi)
