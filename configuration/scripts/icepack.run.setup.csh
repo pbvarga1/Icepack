@@ -45,7 +45,11 @@ cd \${ICE_RUNDIR}
 
 setenv OMP_NUM_THREADS ${nthrds}
 
-cp -f \${ICE_CASEDIR}/icepack_in \${ICE_RUNDIR}
+if (\$1 != "") then
+    cp -f \${ICE_CASEDIR}/\$1 \${ICE_RUNDIR}
+else
+    cp -f \${ICE_CASEDIR}/icepack_in \${ICE_RUNDIR}
+endif
 echo " "
 echo "ICEPACK rundir is \${ICE_RUNDIR}"
 echo "ICEPACK log file is \${ICE_RUNLOG_FILE}"
