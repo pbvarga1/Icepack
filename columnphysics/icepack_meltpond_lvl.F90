@@ -161,7 +161,7 @@
                 +                 melts*rhos &
                 +                 frain*  dt)*aicen
 
-            dvn = dvn + pump_amnt*rfrac
+            dvn = dvn + pump_amnt*rfrac*aicen
 
             ! shrink pond volume under freezing conditions
             if (trim(frzpnd) == 'cesm') then

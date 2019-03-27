@@ -112,7 +112,7 @@
                   +                 frain*  dt)&
                   * aicen
 
-            volpn = volpn + pump_amnt*rfrac
+            volpn = volpn + pump_amnt*rfrac*aicen
 
             !-----------------------------------------------------------
             ! Shrink pond volume under freezing conditions
