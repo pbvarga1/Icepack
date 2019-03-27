@@ -102,14 +102,14 @@
       use icedrv_arrays_column, only: hfreebd, hdraft, hridge, distrdg
       use icedrv_arrays_column, only: hkeel, dkeel, lfloe, dfloe
       use icedrv_arrays_column, only: fswsfcn, fswintn, fswthrun, Sswabsn, Iswabsn
-      use icedrv_calendar, only: yday
+      use icedrv_calendar, only: yday, time
       use icedrv_domain_size, only: ncat, nilyr, nslyr, n_aero, nx
       use icedrv_flux, only: frzmlt, sst, Tf, strocnxT, strocnyT, rside, fbot, Tbot, Tsnice
       use icedrv_flux, only: meltsn, melttn, meltbn, congeln, snoicen, uatm, vatm
       use icedrv_flux, only: wind, rhoa, potT, Qa, zlvl, strax, stray, flatn
       use icedrv_flux, only: fsensn, fsurfn, fcondtopn, fcondbotn
       use icedrv_flux, only: flw, fsnow, fpond, sss, mlt_onset, frz_onset
-      use icedrv_flux, only: frain, Tair, strairxT, strairyT, fsurf
+      use icedrv_flux, only: frain, Tair, strairxT, strairyT, fsurf, pump_amnt
       use icedrv_flux, only: fcondtop, fcondbot, fsens, fresh, fsalt, fhocn
       use icedrv_flux, only: flat, fswabs, flwout, evap, evaps, evapi, Tref, Qref, Uref
       use icedrv_flux, only: fswthru, meltt, melts, meltb, congel, snoice
@@ -117,7 +117,7 @@
       use icedrv_flux, only: dsnown, faero_atm, faero_ocn
       use icedrv_init, only: lmask_n, lmask_s
       use icedrv_state, only: aice, aicen, aice_init, aicen_init, vicen_init
-      use icedrv_state, only: vice, vicen, vsno, vsnon, trcrn, uvel, vvel, vsnon_init
+      use icedrv_state, only: vice, vicen, vsno, vsnon, trcrn, uvel, vvel, vsnon_init, Spond, darcy, hocn, perm_harm
 
       ! column packge includes
       use icepack_intfc, only: icepack_step_therm1
@@ -223,7 +223,7 @@
             enddo
           enddo
         endif ! tr_aero
-        
+
         call icepack_step_therm1(dt, ncat, nilyr, nslyr, n_aero,                &
             aicen_init  (i,:),                           &
             vicen_init  (i,:), vsnon_init  (i,:), &
@@ -295,7 +295,7 @@
             dsnown      (i,:), &
             lmask_n     (i), lmask_s     (i), &
             mlt_onset   (i), frz_onset   (i), &
-            yday,  prescribed_ice)
+            yday,  prescribed_ice, time, Spond(i,:), pump_amnt(i), darcy(i, :), hocn(i, :), perm_harm(i, :))
 
         if (tr_aero) then
           do n = 1, ncat
