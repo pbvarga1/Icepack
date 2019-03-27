@@ -161,7 +161,11 @@
                 +                 melts*rhos &
                 +                 frain*  dt)*aicen
 
-            dvn = dvn + pump_amnt*rfrac*aicen
+            dvn = dvn + pump_amnt
+            ! Just add the height without accounting for the water fraction
+            ! to simplify the model since we want to see how changing the pond
+            ! height affects melting.
+            ! dvn = dvn + pump_amnt*rfrac*aicen
 
             ! shrink pond volume under freezing conditions
             if (trim(frzpnd) == 'cesm') then
