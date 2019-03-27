@@ -65,17 +65,17 @@
       use icedrv_flux, only: default_season
       use icedrv_forcing, only: precip_units,    fyear_init,      ycycle
       use icedrv_forcing, only: atm_data_type,   ocn_data_type,   bgc_data_type
-      use icedrv_forcing, only: atm_data_file,   ocn_data_file,   bgc_data_file
+      use icedrv_forcing, only: atm_data_file,   ocn_data_file,   bgc_data_file, pump_data_file
       use icedrv_forcing, only: ice_data_file
       use icedrv_forcing, only: atm_data_format, ocn_data_format, bgc_data_format
       use icedrv_forcing, only: data_dir
       use icedrv_forcing, only: oceanmixed_ice, restore_ocn, trestore
-      use icedrv_forcing, only: pump_start, pump_end, pump_amnt, pump_repeats
+      use icedrv_forcing, only: pump_data_file
 
       ! local variables
 
-      character (32) :: &
-         nml_filename = 'icepack_in' ! namelist input file name
+      character (100) :: &
+         nml_filename = 'icepack_in', arg ! namelist input file name
 
       integer (kind=int_kind) :: &
          nml_error, & ! namelist i/o error flag
@@ -163,7 +163,7 @@
         tr_aero
 
       namelist /custom_nml/ &
-        pump_start,      pump_end, pump_amnt, pump_repeats
+        pump_data_file
 
       !-----------------------------------------------------------------
       ! query Icepack values
@@ -238,6 +238,7 @@
       bgc_data_format = 'bin'     ! file format ('bin'=binary or 'nc'=netcdf)
       bgc_data_type   = 'default' ! source of BGC forcing data
       bgc_data_file   = ' '       ! biogeochemistry forcing data file
+      pump_data_file  = ' '       ! data for pumping
       data_dir    = ' '           ! root location of data files
       restore_ocn     = .false.   ! restore sst if true
       trestore        = 90        ! restoring timescale, days (0 instantaneous)
@@ -251,15 +252,15 @@
       tr_pond_topo = .false. ! explicit melt ponds (topographic)
       tr_aero      = .false. ! aerosols
 
-      ! Custom Input
-      pump_start = -1
-      pump_end = 17521
-      pump_amnt = 0.3
-      pump_repeats = 1
-
       !-----------------------------------------------------------------
       ! read from input file
       !-----------------------------------------------------------------
+
+      call get_command_argument(1, arg)
+
+      if (arg /= '') then
+        nml_filename = arg
+      endif
 
       open (nu_nml, file=nml_filename, status='old',iostat=nml_error)
       if (nml_error /= 0) then
@@ -569,6 +570,8 @@
                                trim(bgc_data_file)
          write(nu_diag,*)    ' ice_data_file             = ', &
                                trim(ice_data_file)
+         write(nu_diag,*)    ' pump_data_file             = ', &
+                               trim(pump_data_file)
 
          if (trim(atm_data_type)=='default') &
          write(nu_diag,*)    ' default_season            = ', trim(default_season)
@@ -771,8 +774,11 @@
       ! lat, lon, cell widths, angle, land mask
       !-----------------------------------------------------------------
 
-      TLAT(:) = p5*pi  ! pi/2, North pole
-      TLON(:) = c0
+      ! TLAT(:) = p5*pi  ! pi/2, North pole
+      ! TLON(:) = c0
+      ! Greenland:
+      TLAT(:) = 83.34259796142578 * pi / 180._dbl_kind
+      TLON(:) = 347.34375 * pi / 180._dbl_kind
 
       do i = 2, nx
          TLAT(i) = TLAT(i-1) - p5*pi/180._dbl_kind ! half-deg increments
