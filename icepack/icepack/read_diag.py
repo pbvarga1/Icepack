@@ -62,7 +62,7 @@ class OutputData:
     # brine_height: np.ndarray
     darcy: np.ndarray
     # rain: np.ndarray
-    # ice_area: np.ndarray
+    ice_area: np.ndarray
     air_temp: np.ndarray
     # fcondbot: np.ndarray
     sice: np.ndarray
@@ -156,7 +156,7 @@ def create_output_data(output_path, lat, lon):
         # brine_height=_get_data_from_output(output, RE_BRINE_HEIGHT),
         darcy=_get_data_from_output(output, RE_DARCY),
         # rain=_get_data_from_output(output, RE_RAIN),
-        # ice_area=_get_data_from_output(output, RE_ICE_AREA),
+        ice_area=_get_data_from_output(output, RE_ICE_AREA),
         air_temp=_get_data_from_output(output, RE_AIR_TEMP),
         # fcondbot=_get_data_from_output(output, RE_FCONDBOT),
         sice=_get_data_from_output(output, RE_SICE),
