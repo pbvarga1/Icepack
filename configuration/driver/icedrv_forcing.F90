@@ -18,14 +18,15 @@
       use icedrv_system, only: icedrv_system_abort
       use icedrv_flux, only: zlvl, Tair, potT, rhoa, uatm, vatm, wind, &
          strax, stray, fsw, swvdr, swvdf, swidr, swidf, Qa, flw, frain, &
-         fsnow, sst, sss, uocn, vocn, qdp, hmix, Tf, opening, closing, sstdat
+         fsnow, sst, sss, uocn, vocn, qdp, hmix, Tf, opening, closing, sstdat, &
+         pump_amnt
 
       implicit none
       private
       public :: init_forcing, get_forcing, interp_coeff, interp_coeff_monthly
 
       integer (kind=int_kind), parameter :: &
-         ntime = 43800        ! number of data points in time - number of hours in 5 years
+         ntime = 87600        ! number of data points in time - number of hours in 10 years
 
       integer (kind=int_kind), public :: &
          ycycle          , & ! number of years in forcing cycle
@@ -59,7 +60,8 @@
           swidr_data, &
           swidf_data, &
            zlvl_data, &
-           hmix_data
+           hmix_data, &
+           pump_amnt_data
 
       real (kind=dbl_kind), dimension(nx) :: &
           sst_temp
@@ -79,6 +81,7 @@
          ocn_data_file,   & ! ocean forcing data file
          ice_data_file,   & ! ice forcing data file
          bgc_data_file,   & ! biogeochemistry forcing data file
+         pump_data_file,  & ! filename for pumping
          precip_units       ! 'mm_per_month', 'mm_per_sec', 'mks'
  
       character(char_len_long), public :: & 
@@ -97,16 +100,6 @@
       real (kind=dbl_kind), public :: & 
          trest, &                  ! restoring time scale (sec)
          trestore                  ! restoring time scale (days)
-
-      integer (kind=int_kind), public :: &
-         pump_start, &    ! day to start pumping water
-         pump_end, &      ! day to stop pumping water
-         pump_repeats, &  ! Number of times to repeat
-         pump_start_nt, & ! time step to start pumping
-         pump_end_nt      ! time step to end pumping
-
-      real (kind=dbl_kind), public :: & 
-         pump_amnt        ! How much preciptation equivalence
 
 !=======================================================================
 
@@ -129,9 +122,6 @@
 
       write (nu_diag,*) ' Initial forcing data year = ',fyear_init
       write (nu_diag,*) ' Final   forcing data year = ',fyear_final
-
-      pump_start_nt = pump_start * 24
-      pump_end_nt = pump_end * 24
 
     !-------------------------------------------------------------------
     ! Initialize forcing data to default values
@@ -197,6 +187,7 @@
                             swvdr_data,    swvdf_data,    &
                             swidr_data,    swidf_data,    &
                             potT_data)
+      if (trim(ocn_data_type(1:6)) == 'thesis')  call pumping
 
       end subroutine init_forcing
 
@@ -330,23 +321,24 @@
          ! strax(:) = c1intp * strax_data(mlast) + c2intp * strax_data(mnext)
          ! stray(:) = c1intp * stray_data(mlast) + c2intp * stray_data(mnext)
          ! rhoa (:) = c1intp *  rhoa_data(mlast) + c2intp *  rhoa_data(mnext)
-         Tair (:) =  Tair_data(timestep)
-         Qa   (:) =    Qa_data(timestep)
-         uatm (:) =  uatm_data(timestep)
-         vatm (:) =  vatm_data(timestep)
-         fsnow(:) = fsnow_data(timestep)
-         flw  (:) =   flw_data(timestep)
-         fsw  (:) =   fsw_data(timestep)
-         potT (:) =  potT_data(timestep)
-         wind (:) =  wind_data(timestep)
-         swvdr(:) = swvdr_data(timestep)
-         swvdf(:) = swvdf_data(timestep)
-         swidr(:) = swidr_data(timestep)
-         swidf(:) = swidf_data(timestep)
-         frain(:) = frain_data(timestep)
-         strax(:) = strax_data(timestep)
-         stray(:) = stray_data(timestep)
-         rhoa (:) =  rhoa_data(timestep)
+         Tair     (:) =      Tair_data(timestep)
+         Qa       (:) =        Qa_data(timestep)
+         uatm     (:) =      uatm_data(timestep)
+         vatm     (:) =      vatm_data(timestep)
+         fsnow    (:) =     fsnow_data(timestep)
+         flw      (:) =       flw_data(timestep)
+         fsw      (:) =       fsw_data(timestep)
+         potT     (:) =      potT_data(timestep)
+         wind     (:) =      wind_data(timestep)
+         swvdr    (:) =     swvdr_data(timestep)
+         swvdf    (:) =     swvdf_data(timestep)
+         swidr    (:) =     swidr_data(timestep)
+         swidf    (:) =     swidf_data(timestep)
+         frain    (:) =     frain_data(timestep)
+         pump_amnt(:) = pump_amnt_data(timestep)
+         strax    (:) =     strax_data(timestep)
+         stray    (:) =     stray_data(timestep)
+         rhoa     (:) =      rhoa_data(timestep)
 
       elseif (trim(atm_data_type) == 'ISPOL') then
 
@@ -886,14 +878,6 @@
                 frain(nt) = fsnow(nt)
                 fsnow(nt) = c0
             endif
-            ! Artificially control rain
-            do i=1, pump_repeats
-              if  (nt >= pump_start_nt + (24 * 365 * (i - 1)) .and. &
-                   nt <= pump_end_nt + (24 * 365 * (i - 1))) then
-                frain(nt) = pump_amnt
-              endif
-            enddo
-!         endif
 
          if (calc_strair) then
             wind (nt) = sqrt(uatm(nt)**2 + vatm(nt)**2)
@@ -1301,6 +1285,36 @@
 
       end subroutine ocn_thesis
 
+!======================================================================
+
+      subroutine pumping
+
+      integer (kind=int_kind) :: &
+         i, nt
+
+      real (kind=dbl_kind) :: &
+         pmp    ! pump amount (m^3)
+
+      character (char_len_long) filename
+      
+      character(len=*), parameter :: subname='(pumping)'
+
+      filename = trim(data_dir)//'/THESIS/'//trim(pump_data_file)
+
+      write (nu_diag,*) 'Reading ',filename
+
+      open (nu_forcing, file=filename, form='formatted')
+
+      do nt = 1, ntime
+          read (nu_forcing, *) pmp
+
+          pump_amnt_data(nt) = pmp
+      enddo
+
+      close(nu_forcing)
+
+      end subroutine pumping
+
 !=======================================================================
 
       subroutine finish_ocn_forcing(sst_temp)
@@ -1349,7 +1363,7 @@
       write (nu_diag,*) 'Reading ',filename
 
       ! hourly data
-      do n=0, 4
+      do n=0, 9
         open (nu_open_clos, file=filename, form='formatted')
         do i=days_per_year * 24 * n + 1, days_per_year * 24 * (n + 1)
            read(nu_open_clos,*) xtime, open_data(i), clos_data(i)
