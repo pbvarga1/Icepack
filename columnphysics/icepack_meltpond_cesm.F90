@@ -36,7 +36,7 @@
                                     rfrac, meltt,        &
                                     melts, frain,        &
                                     aicen, vicen, &
-                                    Tsfcn, apnd,  hpnd)
+                                    Tsfcn, apnd,  hpnd, pump_amnt)
 
       real (kind=dbl_kind), intent(in) :: &
          dt,       & ! time step (s)
@@ -56,7 +56,8 @@
 
       real (kind=dbl_kind), intent(inout) :: &
          apnd, &
-         hpnd
+         hpnd, &
+         pump_amnt
 
 !     local temporary variables
 
@@ -98,6 +99,7 @@
             apondn = c0
             hpondn = c0
             volpn  = c0
+            pump_amnt = c0
 
          else
 
@@ -109,6 +111,8 @@
                   +                 melts*rhos &
                   +                 frain*  dt)&
                   * aicen
+
+            volpn = volpn + pump_amnt*rfrac
 
             !-----------------------------------------------------------
             ! Shrink pond volume under freezing conditions
